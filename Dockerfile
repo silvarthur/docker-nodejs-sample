@@ -1,39 +1,33 @@
-# ===========
-# Base Stage
-# ===========
-FROM node:22-alpine3.23 AS base
+FROM node:24-alpine as base
 
 WORKDIR /app
 
-# Create a non-root user for security?
-
-# =======================================
-# Install Development Dependencies Stage
-# =======================================
-
-FROM base AS dev-dependencies
-
-COPY package*.json ./
-
+COPY package*.json .
 RUN npm install
 
-# ======================================
-# Install Production Dependencies Stage
-# ======================================
+COPY . . 
 
-FROM base AS prod-dependencies
-
-COPY package*.json ./
-
-RUN npm install --omit=dev
-
-# ======================================
-# Create Development Environement Stage
-# ======================================
-FROM dev-dependencies AS development
-
-COPY . .
+FROM base as dev
 
 EXPOSE 3000 5173 9230
-
 CMD ["npm", "run", "dev:docker"]
+
+FROM base as tests
+
+RUN npm test
+RUN touch /.tests-successfull
+
+FROM base as builder
+
+COPY --from=tests /.tests-successfull .
+RUN npm run build
+
+FROM node:24-alpine as prod
+WORKDIR /app
+
+COPY package*.json .
+RUN npm install --omit=dev
+
+COPY --from=builder /app/dist ./dist
+
+CMD ["npm", "run", "start"]

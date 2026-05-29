@@ -1,0 +1,33 @@
+services:
+  app:
+    build:
+      context: .
+      target: prod
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: todoapp
+      POSTGRES_PASSWORD: todoapp_password
+      POSTGRES_DB: todoapp
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16
+    container_name: postgres-db
+
+    environment:
+      POSTGRES_USER: todoapp
+      POSTGRES_PASSWORD: todoapp_password
+      POSTGRES_DB: todoapp
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
