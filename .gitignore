@@ -125,9 +125,6 @@ $RECYCLE.BIN/
 # ========================================
 # DevOps & Deployment
 # ========================================
-# Docker
-.dockerignore
-
 # Kubernetes
 *.yaml.bak
 *.yml.bak

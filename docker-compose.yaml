@@ -1,0 +1,63 @@
+services:
+  application-development:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: my-application-development
+    ports:
+      - '${APP_PORT:-3000}:3000'
+      - '${VITE_PORT:-5173}:5173'
+      - '${DEBUG_PORT:-9229}:9229'
+    environment:
+      NODE_ENV: development
+      DOCKER_ENV: 'true'
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: my_application
+      POSTGRES_USER: my_application
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:-my_application_password}'
+      ALLOWED_ORIGINS: '${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}'
+    volumes:
+      - ./src:/app/src:ro
+      - ./package.json:/app/package.json
+      - ./vite.config.ts:/app/vite.config.ts:ro
+      - ./tailwind.config.js:/app/tailwind.config.js:ro
+      - ./postcss.config.js:/app/postcss.config.js:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - my-application-network
+
+  db:
+    image: postgres:18-alpine
+    container_name: my-application-db
+    environment:
+      POSTGRES_DB: '${POSTGRES_DB:-my_application}'
+      POSTGRES_USER: '${POSTGRES_USER:-my_application}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:-my_application_password}'
+    volumes:
+      - postgres_volume:/var/lib/postgresql
+    ports:
+      - '${DB_PORT:-5433}:5432'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-todoapp} -d ${POSTGRES_DB:-todoapp}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - my-application-network
+
+volumes:
+  postgres_volume:
+    name: my-application-db-volume
+    driver: local
+
+networks:
+  my-application-network:
+    name: my-application-network
+    driver: bridge
