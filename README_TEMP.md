@@ -2,7 +2,7 @@
 
 ## Utilizando Docker Compose:
 
-Execute the command 
+Executar o comando
 
  - Development: `docker compose up application-development --build`
  - Production: `docker compose up application-production --build`
