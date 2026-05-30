@@ -42,9 +42,15 @@ RUN npm run build
 # ======================================
 FROM dev-dependencies AS development
 
-COPY . .
+# Setup directory and permissions for the non-root 'node' user
+RUN chown -R node:node /app
+
+COPY --chown=node:node . .
 
 EXPOSE 3000 5173 9229
+
+# Switch to the non-root user
+USER node
 
 CMD ["npm", "run", "dev:docker"]
 
@@ -56,10 +62,15 @@ FROM node:22-alpine3.23 AS production
 
 WORKDIR /app
 
-COPY --from=prod-dependencies /app/node_modules ./node_modules
-COPY --from=prod-dependencies /app/package*.json ./
-COPY --from=build /app/dist ./dist
+RUN chown -R node:node /app
+
+COPY --from=prod-dependencies --chown=node:node /app/node_modules ./node_modules
+COPY --from=prod-dependencies --chown=node:node /app/package*.json ./
+COPY --from=build --chown=node:node /app/dist ./dist
 
 EXPOSE 3000
+
+# Switch to the non-root user
+USER node
 
 CMD ["node", "dist/server.js"]
